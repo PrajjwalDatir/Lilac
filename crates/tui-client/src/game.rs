@@ -39,7 +39,9 @@ pub struct LocalGameApp {
     pub board: BoardState,
     history: Vec<(BoardState, Option<((u8, u8), (u8, u8))>)>,
     pub cursor: (u8, u8),
+    pub cursor_active: bool,
     pub hovered: Option<(u8, u8)>,
+    pub pointer_pos: Option<(u16, u16)>,
     pub selected: Option<(u8, u8)>,
     pub dragging_from: Option<(u8, u8)>,
     pub last_move: Option<((u8, u8), (u8, u8))>,
@@ -64,7 +66,9 @@ impl LocalGameApp {
             board: BoardState::new(),
             history: Vec::new(),
             cursor: (4, 1), // e2
+            cursor_active: false,
             hovered: None,
+            pointer_pos: None,
             selected: None,
             dragging_from: None,
             last_move: None,
@@ -148,6 +152,9 @@ impl LocalGameApp {
 
     pub fn on_mouse_move(&mut self, sq: Option<(u8, u8)>) {
         self.hovered = sq;
+        if sq.is_some() {
+            self.cursor_active = false;
+        }
     }
 
     /// Returns exact `(captured_by_white, captured_by_black)` slices tracked by `chess-core`.
@@ -256,6 +263,7 @@ impl LocalGameApp {
 
     pub fn move_cursor(&mut self, dx: i8, dy: i8) {
         self.hovered = None;
+        self.cursor_active = true;
         let (fx, fy) = if self.flipped { (-dx, -dy) } else { (dx, dy) };
         let nx = (self.cursor.0 as i8 + fx).clamp(0, 7) as u8;
         let ny = (self.cursor.1 as i8 + fy).clamp(0, 7) as u8;
@@ -276,8 +284,9 @@ impl LocalGameApp {
             .collect()
     }
 
-    /// Handles `Enter` / `Space` at the current cursor square.
+    /// Handles `Enter` at the current cursor square.
     pub fn activate_cursor(&mut self) {
+        self.cursor_active = true;
         if self.board.status().is_terminal() {
             self.status_message = "Game over — press 'r' for a new game or 'u' to undo.".into();
             return;
