@@ -29,7 +29,7 @@ tracing = "0.1"
 shakmaty = "0.27"
 
 # Async & Server
-tokio = { version = "1.42", features = ["full"] }
+tokio = { version = "1.42", features = ["rt-multi-thread", "macros", "net", "sync", "time", "io-util"] }
 axum = { version = "0.8", features = ["ws", "macros"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
@@ -47,8 +47,11 @@ rand_core = "0.6"
 
 # TUI Client
 ratatui = "0.29"
+ratatui-image = { version = "8.1", default-features = false, features = ["crossterm"] }
+resvg = { version = "0.50", default-features = false }
+image = { version = "0.25", default-features = false, features = ["png"] }
 crossterm = "0.28"
-tokio-tungstenite = "0.26"
+tokio-tungstenite = "0.29"
 
 # Wasm Client
 wasm-bindgen = "0.2"
