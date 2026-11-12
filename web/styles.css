@@ -151,6 +151,7 @@ html, body {
 
 .text-btn:hover {
   color: var(--lilac);
+  background: var(--bg-hover);
 }
 
 .btn-solid-lilac {
@@ -162,6 +163,10 @@ html, body {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.btn-solid-lilac:hover {
+  background: #d8b4fe;
 }
 
 .btn-solid-lilac.full {
@@ -271,9 +276,19 @@ html, body {
 }
 
 .square img.piece {
-  width: 82%;
-  height: 82%;
+  width: 90%;
+  height: 90%;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+  transform: translate(-50%, -50%) scale(1.1);
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55));
 }
 
 .square.legal-empty::after {

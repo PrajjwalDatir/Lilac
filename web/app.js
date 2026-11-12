@@ -161,6 +161,28 @@ function closePromotionModal() {
 }
 
 const boardSquareNodes = [];
+let dragGhostEl = null;
+
+function hideDragGhost() {
+  if (dragGhostEl) {
+    dragGhostEl.remove();
+    dragGhostEl = null;
+  }
+}
+
+function showDragGhost(imgSrc, sizePx, clientX, clientY) {
+  hideDragGhost();
+  const ghost = document.createElement("img");
+  ghost.className = "drag-ghost";
+  ghost.src = imgSrc;
+  ghost.draggable = false;
+  ghost.style.width = `${sizePx}px`;
+  ghost.style.height = `${sizePx}px`;
+  ghost.style.left = `${clientX}px`;
+  ghost.style.top = `${clientY}px`;
+  document.body.appendChild(ghost);
+  dragGhostEl = ghost;
+}
 
 function ensureBoardGrid(boardEl) {
   if (boardSquareNodes.length === 64) return;
@@ -173,10 +195,12 @@ function ensureBoardGrid(boardEl) {
     fLbl.className = "coord-file hidden";
     const img = document.createElement("img");
     img.className = "piece hidden";
+    img.draggable = false;
     sqEl.append(rLbl, fLbl, img);
 
     sqEl.addEventListener("pointerdown", async (e) => {
       if (e.button !== 0) return;
+      e.preventDefault();
       const sq = sqEl.dataset.sq;
       if (state.selectedSq && state.selectedSq !== sq && legalTargetsFor(state.selectedSq).includes(sq)) {
         await tryMove(state.selectedSq, sq);
@@ -185,6 +209,11 @@ function ensureBoardGrid(boardEl) {
       if (legalTargetsFor(sq).length > 0) {
         state.selectedSq = state.selectedSq === sq ? null : sq;
         state.dragFromSq = sq;
+        const rect = sqEl.getBoundingClientRect();
+        const src = img.getAttribute("src");
+        if (src && !img.classList.contains("hidden")) {
+          showDragGhost(src, rect.width * 0.9, e.clientX, e.clientY);
+        }
         renderArena();
       } else {
         state.selectedSq = null;
@@ -573,8 +602,20 @@ document.querySelectorAll(".demo-login").forEach((btn) => {
   };
 });
 
-// Global pointerup handles drag-and-drop cleanly even if released off-square
+// Global pointermove/pointerup/pointercancel handle drag-and-drop cleanly even if released off-square
+window.addEventListener("pointermove", (e) => {
+  if (!dragGhostEl) return;
+  dragGhostEl.style.left = `${e.clientX}px`;
+  dragGhostEl.style.top = `${e.clientY}px`;
+});
+
+window.addEventListener("pointercancel", () => {
+  state.dragFromSq = null;
+  hideDragGhost();
+});
+
 window.addEventListener("pointerup", async (e) => {
+  hideDragGhost();
   if (!state.dragFromSq) return;
   const from = state.dragFromSq;
   state.dragFromSq = null;
