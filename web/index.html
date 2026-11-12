@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LILAC</title>
+  <link rel="stylesheet" href="/styles.css?v=8" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-name">LILAC</span>
+      </div>
+
+      <nav class="nav-bar" aria-label="Primary sections">
+        <button class="nav-tab active" data-tab="arena">Arena</button>
+        <button class="nav-tab" data-tab="ladder">Ladder</button>
+        <button class="nav-tab" data-tab="profile">Profile</button>
+      </nav>
+
+      <div class="topbar-right">
+        <button id="auth-open-btn" class="text-btn">Sign In</button>
+      </div>
+    </header>
+
+    <!-- TAB 1: ARENA -->
+    <main id="tab-arena" class="tab-panel active arena-layout">
+      <section class="board-column">
+        <div id="top-player-bar" class="player-strip">
+          <span class="player-name">Black</span>
+          <div class="captured-tray" id="top-captured"></div>
+        </div>
+
+        <div class="board-wrap">
+          <div id="chess-board" class="chess-board" role="grid" aria-label="Chess board"></div>
+        </div>
+
+        <div id="bottom-player-bar" class="player-strip">
+          <span class="player-name">White</span>
+          <div class="captured-tray" id="bottom-captured"></div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="match-summary">
+          <div id="game-status-text" class="status-line">White to move</div>
+          <div id="opening-line" class="opening-line hidden">
+            <span id="opening-eco" class="lilac-text"></span>
+            <span id="opening-name"></span>
+          </div>
+        </div>
+
+        <div id="scoresheet" class="scoresheet"></div>
+
+        <div class="action-dock">
+          <button id="btn-options" class="dock-btn" title="Options">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+            <span>Options</span>
+          </button>
+          <button id="btn-reset" class="dock-btn" title="New match (r)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>New</span>
+          </button>
+          <button id="btn-undo" class="dock-btn" title="Undo move (u)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back</span>
+          </button>
+          <button id="btn-flip" class="dock-btn" title="Flip board (f)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12m0 0l4-4m-4 4l-4-4"></path></svg>
+            <span>Flip</span>
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- TAB 2: LADDER -->
+    <main id="tab-ladder" class="tab-panel scroll-page">
+      <div class="two-col-layout">
+        <section class="editorial-section">
+          <div class="section-head">
+            <div>
+              <div class="kicker">GOLD+ QUALIFIED</div>
+              <h2>Global Rating</h2>
+            </div>
+            <span class="lilac-text meta-right">10 Qualification Games</span>
+          </div>
+          <div id="global-lb-list" class="flat-table"></div>
+        </section>
+
+        <section class="editorial-section">
+          <div class="section-head">
+            <div>
+              <div class="kicker">LOCALIZED COHORT</div>
+              <h2 id="cohort-lb-title">Cohort Ladder</h2>
+            </div>
+            <span class="meta-right">0–100 RR</span>
+          </div>
+          <div id="cohort-lb-list" class="flat-table"></div>
+        </section>
+      </div>
+    </main>
+
+    <!-- TAB 3: PROFILE -->
+    <main id="tab-profile" class="tab-panel scroll-page">
+      <div id="profile-content" class="profile-layout">
+        <section class="editorial-section">
+          <div class="kicker">COMPETITIVE RECORD</div>
+          <h2>Sign in to view Rank, RR &amp; Opening Mastery</h2>
+          <p class="muted-copy">Create a Lilac account or inspect a seeded player (password <code>lilacseed123</code>).</p>
+          <div class="inline-actions">
+            <button id="profile-signin-cta" class="btn-solid-lilac">Sign In / Register</button>
+            <button class="text-btn demo-login" data-user="silver_nemesis">silver_nemesis</button>
+            <button class="text-btn demo-login" data-user="gold_qualifier">gold_qualifier</button>
+            <button class="text-btn demo-login" data-user="radiant_gm">radiant_gm</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Options Sheet -->
+  <div id="options-modal" class="sheet-backdrop hidden">
+    <div class="sheet-panel">
+      <div class="sheet-head">
+        <span>Options</span>
+        <button id="options-close-btn" class="text-btn">Done</button>
+      </div>
+      <div class="option-row">
+        <span>Piece Set</span>
+        <div class="option-tabs" id="piece-set-seg">
+          <button class="nav-tab active" data-set="spatial">Spatial</button>
+          <button class="nav-tab" data-set="fantasy">Fantasy</button>
+          <button class="nav-tab" data-set="celtic">Celtic</button>
+        </div>
+      </div>
+      <div class="option-row">
+        <span>Auto-Flip on Turn</span>
+        <button id="btn-auto-flip" class="text-btn">Off</button>
+      </div>
+      <div class="option-row">
+        <span>Board Audio</span>
+        <button id="sound-toggle" class="text-btn">On</button>
+      </div>
+      <div class="option-row">
+        <span>Server Socket</span>
+        <span id="ws-label" class="meta-right">Connecting</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotion Sheet -->
+  <div id="promo-modal" class="sheet-backdrop hidden">
+    <div class="sheet-panel">
+      <div class="sheet-head">
+        <span>Promote Pawn</span>
+        <button id="promo-cancel" class="text-btn">Cancel</button>
+      </div>
+      <div id="promo-choices" class="promo-choices"></div>
+    </div>
+  </div>
+
+  <!-- Account Sheet -->
+  <div id="auth-modal" class="sheet-backdrop hidden">
+    <div class="sheet-panel">
+      <div class="sheet-head">
+        <span>Account</span>
+        <button id="auth-close-btn" class="text-btn">Close</button>
+      </div>
+      <div class="nav-bar full-bar">
+        <button id="mode-login-btn" class="nav-tab active">Sign In</button>
+        <button id="mode-register-btn" class="nav-tab">Register</button>
+      </div>
+      <form id="auth-form" class="auth-form">
+        <input id="auth-username" type="text" placeholder="Username" required />
+        <input id="auth-email" type="email" placeholder="Email" class="hidden" />
+        <input id="auth-password" type="password" placeholder="Password (min 8 chars)" required />
+        <div id="auth-error" class="form-error"></div>
+        <button type="submit" class="btn-solid-lilac full">Continue</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/app.js?v=8" type="module"></script>
+</body>
+</html>
