@@ -1,0 +1,19 @@
+[package]
+name = "wasm-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+chess-core.workspace = true
+client-core.workspace = true
+console_error_panic_hook.workspace = true
+js-sys.workspace = true
+lilac-proto.workspace = true
+serde.workspace = true
+serde-wasm-bindgen.workspace = true
+serde_json.workspace = true
+wasm-bindgen.workspace = true
