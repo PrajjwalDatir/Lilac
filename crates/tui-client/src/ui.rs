@@ -18,17 +18,18 @@ use ratatui_image::{
 use crate::assets::SvgPieceAtlas;
 use crate::game::{InputMode, LocalGameApp, MENU_ACTIONS, MenuAction, coord_to_alg};
 
-// Strictly Monochrome + Lilac HIG palette (no extra colors)
-const BG_CANVAS: Color = Color::Rgb(9, 9, 11);
-const BG_SURFACE: Color = Color::Rgb(17, 17, 20);
-const BG_SURFACE_ACTIVE: Color = Color::Rgb(26, 26, 31);
-const BG_PILL: Color = Color::Rgb(32, 32, 39);
-const BG_PILL_HOVER: Color = Color::Rgb(88, 56, 134);
-const BG_LILAC_SOFT: Color = Color::Rgb(44, 32, 62);
-const FG_PRIMARY: Color = Color::Rgb(250, 250, 250);
-const FG_MUTED: Color = Color::Rgb(161, 161, 170);
-const FG_DIM: Color = Color::Rgb(82, 82, 91);
-const ACCENT_LILAC: Color = Color::Rgb(192, 132, 252);
+// Strictly 3-color palette: Black, White, and Lilac
+const COLOR_BLACK: Color = Color::Rgb(9, 9, 11);
+const COLOR_WHITE: Color = Color::Rgb(250, 250, 250);
+const COLOR_LILAC: Color = Color::Rgb(192, 132, 252);
+
+const BG_CANVAS: Color = COLOR_BLACK;
+const BG_SURFACE: Color = COLOR_BLACK;
+const BG_SURFACE_ACTIVE: Color = COLOR_BLACK;
+const FG_PRIMARY: Color = COLOR_WHITE;
+const FG_MUTED: Color = COLOR_WHITE;
+const FG_DIM: Color = COLOR_WHITE;
+const ACCENT_LILAC: Color = COLOR_LILAC;
 
 /// Holds the cached SVG piece atlas, detected terminal graphics protocol, and
 /// latest encoded board image protocol without retaining raw source buffers.
@@ -91,7 +92,10 @@ impl BoardVisualState {
         app.hovered.hash(&mut hasher);
         app.cursor.hash(&mut hasher);
         app.cursor_active.hash(&mut hasher);
-        app.dragging_from.is_some().hash(&mut hasher);
+        app.dragging_from.hash(&mut hasher);
+        if app.dragging_from.is_some() {
+            app.pointer_pos.hash(&mut hasher);
+        }
         app.last_move.hash(&mut hasher);
         app.flipped.hash(&mut hasher);
         board.cell_w.hash(&mut hasher);
@@ -107,10 +111,10 @@ impl BoardVisualState {
         let legal_targets = app.legal_targets_for_selected();
         let proto = match proto_type {
             ProtocolType::Kitty => {
-                let tw = ((board.cell_w as u32) * (fw.max(1) as u32) * 2).clamp(96, 224);
-                let th = ((board.cell_h as u32) * (fh.max(1) as u32) * 2).clamp(96, 224);
+                let tw = (board.cell_w as u32) * (fw.max(1) as u32);
+                let th = (board.cell_h as u32) * (fh.max(1) as u32);
                 if self.atlas.ensure_tile_size(tw, th).is_ok() {
-                    let img = self.atlas.compose_board_image(app, &legal_targets);
+                    let img = self.atlas.compose_board_image(app, &legal_targets, board);
                     let id = self.alloc_kitty_id();
                     Kitty::new(img, grid_rect, id, self.is_tmux)
                         .ok()
@@ -123,7 +127,7 @@ impl BoardVisualState {
                 let tw = (board.cell_w as u32) * (fw.max(1) as u32);
                 let th = (board.cell_h as u32) * (fh.max(1) as u32);
                 if self.atlas.ensure_tile_size(tw, th).is_ok() {
-                    let img = self.atlas.compose_board_image(app, &legal_targets);
+                    let img = self.atlas.compose_board_image(app, &legal_targets, board);
                     self.picker
                         .new_protocol(img, grid_rect, Resize::Fit(Some(FilterType::Lanczos3)))
                         .ok()
@@ -157,7 +161,7 @@ pub fn render(frame: &mut Frame, app: &LocalGameApp, visuals: &mut BoardVisualSt
         render_command_bar(frame, app, layout.command_bar);
     } else {
         frame.render_widget(
-            Block::default().style(Style::default().bg(Color::Rgb(14, 14, 20))),
+            Block::default().style(Style::default().bg(COLOR_BLACK)),
             layout.command_bar,
         );
         render_action_pills(frame, app, &layout);
@@ -521,18 +525,11 @@ fn render_unicode_board(
     layout: &BoardLayout,
     grid_rect: Rect,
 ) {
-    const SQ_LIGHT: Color = Color::Rgb(166, 166, 178);
-    const SQ_DARK: Color = Color::Rgb(74, 74, 86);
-    const SQ_LAST_LIGHT: Color = Color::Rgb(156, 142, 186);
-    const SQ_LAST_DARK: Color = Color::Rgb(90, 76, 120);
-    const SQ_HOVER_LIGHT: Color = Color::Rgb(178, 160, 214);
-    const SQ_HOVER_DARK: Color = Color::Rgb(96, 82, 132);
-    const SQ_SELECTED: Color = Color::Rgb(147, 51, 234);
-    const SQ_CAPTURE: Color = Color::Rgb(126, 68, 184);
-    const SQ_CHECK: Color = Color::Rgb(168, 85, 247);
-    const SQ_CURSOR: Color = Color::Rgb(192, 132, 252);
-    const PIECE_WHITE: Color = Color::Rgb(252, 252, 255);
-    const PIECE_BLACK: Color = Color::Rgb(9, 9, 12);
+    const SQ_LIGHT: Color = Color::Rgb(224, 224, 234);
+    const SQ_DARK: Color = Color::Rgb(62, 62, 76);
+    const SQ_SELECTED: Color = Color::Rgb(166, 116, 216);
+    const PIECE_WHITE: Color = COLOR_WHITE;
+    const PIECE_BLACK: Color = Color::Rgb(14, 14, 18);
 
     let cell_w = layout.cell_w as usize;
     let cell_h = layout.cell_h as usize;
@@ -563,29 +560,35 @@ fn render_unicode_board(
                 let piece = squares[sq_idx];
                 let is_light = (file + rank) % 2 == 1;
 
+                let is_selected = app.selected == Some(coord);
+                let is_hovered = app.hovered == Some(coord);
+                let is_last_move = app
+                    .last_move
+                    .is_some_and(|(from, to)| coord == from || coord == to);
+                let is_cursor =
+                    (app.dragging_from.is_some() || app.cursor_active) && app.cursor == coord;
+                let is_check_king = king_in_check && piece == Some((turn, PieceKind::King));
+
                 let mut bg = if is_light { SQ_LIGHT } else { SQ_DARK };
-                if let Some((from, to)) = app.last_move
-                    && (coord == from || coord == to)
-                {
-                    bg = if is_light { SQ_LAST_LIGHT } else { SQ_LAST_DARK };
-                }
-                if app.hovered == Some(coord) {
-                    bg = if is_light { SQ_HOVER_LIGHT } else { SQ_HOVER_DARK };
-                }
-                if king_in_check && piece == Some((turn, PieceKind::King)) {
-                    bg = SQ_CHECK;
-                }
-                let is_legal = legal_targets.contains(&coord);
-                if app.selected == Some(coord) {
+                if is_selected || is_hovered || is_last_move || is_cursor || is_check_king {
                     bg = SQ_SELECTED;
-                } else if is_legal && piece.is_some() {
-                    bg = SQ_CAPTURE;
-                }
-                if (app.dragging_from.is_some() || app.cursor_active) && app.cursor == coord {
-                    bg = SQ_CURSOR;
                 }
 
-                let (text, fg) = match piece {
+                let is_legal = legal_targets.contains(&coord);
+
+                let is_dragged_origin = app.dragging_from == Some(coord);
+                let active_piece = if is_dragged_origin {
+                    None
+                } else if app.dragging_from.is_some() && app.hovered == Some(coord) {
+                    app.dragging_from.and_then(|from| {
+                        let idx = (7 - from.1 as usize) * 8 + from.0 as usize;
+                        squares[idx]
+                    })
+                } else {
+                    piece
+                };
+
+                let (text, fg) = match active_piece {
                     Some((side, kind)) if sub_y == mid_row => (
                         center_in_cell(solid_piece_glyph(kind), cell_w),
                         match side {
@@ -594,7 +597,7 @@ fn render_unicode_board(
                         },
                     ),
                     None if is_legal && sub_y == mid_row => {
-                        (center_in_cell("●", cell_w), ACCENT_LILAC)
+                        (center_in_cell("●", cell_w), if bg == SQ_SELECTED { PIECE_BLACK } else { ACCENT_LILAC })
                     }
                     _ => (" ".repeat(cell_w), Color::Reset),
                 };
@@ -684,7 +687,7 @@ fn render_telemetry_rail(
     let rail_block = Block::default()
         .style(Style::default().bg(BG_SURFACE))
         .borders(Borders::LEFT)
-        .border_style(Style::default().fg(Color::Rgb(34, 32, 46)));
+        .border_style(Style::default().fg(COLOR_WHITE));
     let inner = rail_block.inner(layout.rail_area);
     frame.render_widget(rail_block, layout.rail_area);
 
@@ -718,7 +721,7 @@ fn render_telemetry_rail(
         ]),
         Line::from(Span::styled(
             "────────────────────────",
-            Style::default().fg(Color::Rgb(36, 34, 48)),
+            Style::default().fg(COLOR_WHITE),
         )),
     ];
     frame.render_widget(Paragraph::new(header), sections[0]);
@@ -848,24 +851,24 @@ fn render_telemetry_rail(
 
 fn render_action_pills(frame: &mut Frame, app: &LocalGameApp, layout: &UiLayout) {
     let (menu_fg, menu_bg) = if is_hovered(app, layout.btn_menu) {
-        (BG_CANVAS, ACCENT_LILAC)
+        (COLOR_WHITE, COLOR_BLACK)
     } else {
-        (ACCENT_LILAC, BG_LILAC_SOFT)
+        (COLOR_BLACK, COLOR_LILAC)
     };
     let (undo_fg, undo_bg) = if is_hovered(app, layout.btn_undo) {
-        (FG_PRIMARY, BG_PILL_HOVER)
+        (COLOR_BLACK, COLOR_LILAC)
     } else {
-        (FG_PRIMARY, BG_PILL)
+        (COLOR_WHITE, COLOR_BLACK)
     };
     let (flip_fg, flip_bg) = if is_hovered(app, layout.btn_flip) {
-        (FG_PRIMARY, BG_PILL_HOVER)
+        (COLOR_BLACK, COLOR_LILAC)
     } else {
-        (FG_PRIMARY, BG_PILL)
+        (COLOR_WHITE, COLOR_BLACK)
     };
     let (quit_fg, quit_bg) = if is_hovered(app, layout.btn_quit) {
-        (FG_PRIMARY, BG_PILL_HOVER)
+        (COLOR_BLACK, COLOR_LILAC)
     } else {
-        (FG_MUTED, BG_PILL)
+        (COLOR_WHITE, COLOR_BLACK)
     };
     render_pill(frame, layout.btn_menu, " Menu ", menu_fg, menu_bg);
     render_pill(frame, layout.btn_undo, " Undo ", undo_fg, undo_bg);
@@ -911,7 +914,7 @@ fn render_command_bar(frame: &mut Frame, app: &LocalGameApp, area: Rect) {
         ]),
     };
 
-    let bar = Paragraph::new(line).style(Style::default().bg(Color::Rgb(14, 14, 20)));
+    let bar = Paragraph::new(line).style(Style::default().bg(COLOR_BLACK));
     frame.render_widget(bar, area);
 }
 
@@ -943,11 +946,9 @@ fn render_menu_modal(frame: &mut Frame, app: &LocalGameApp, layout: &UiLayout) {
         };
 
         let (fg, bg) = if is_selected {
-            (ACCENT_LILAC, BG_LILAC_SOFT)
-        } else if *action == MenuAction::Quit {
-            (FG_MUTED, BG_SURFACE_ACTIVE)
+            (COLOR_BLACK, COLOR_LILAC)
         } else {
-            (FG_PRIMARY, BG_SURFACE_ACTIVE)
+            (COLOR_WHITE, COLOR_BLACK)
         };
 
         let row = Paragraph::new(Line::from(Span::styled(
@@ -979,16 +980,16 @@ fn render_promotion_modal(frame: &mut Frame, app: &LocalGameApp, layout: &UiLayo
             _ => " [N] ♞ ",
         };
         let (fg, bg) = if is_hovered(app, rect) {
-            (BG_CANVAS, ACCENT_LILAC)
+            (COLOR_BLACK, COLOR_LILAC)
         } else {
-            (FG_PRIMARY, BG_PILL)
+            (COLOR_WHITE, COLOR_BLACK)
         };
         render_pill(frame, rect, label, fg, bg);
     }
     let (cancel_fg, cancel_bg) = if is_hovered(app, layout.promo_cancel) {
-        (FG_PRIMARY, BG_PILL_HOVER)
+        (COLOR_BLACK, COLOR_LILAC)
     } else {
-        (FG_MUTED, BG_PILL)
+        (COLOR_WHITE, COLOR_BLACK)
     };
     render_pill(frame, layout.promo_cancel, " [Esc] X ", cancel_fg, cancel_bg);
 }

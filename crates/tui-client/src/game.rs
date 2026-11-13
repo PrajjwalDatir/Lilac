@@ -219,11 +219,20 @@ impl LocalGameApp {
             return;
         };
         let Some(target) = sq else {
+            self.selected = None;
+            self.status_message = "Move cancelled — snapped back to origin.".into();
             return;
         };
         self.cursor = target;
         if target != from {
-            let _ = self.try_move_or_promote(from, target);
+            let legal_targets = self.legal_targets_for_selected();
+            if legal_targets.contains(&target) && self.try_move_or_promote(from, target) {
+                self.selected = None;
+                return;
+            }
+            // Illegal square: snap back to origin
+            self.selected = None;
+            self.status_message = "Illegal move — piece snapped back to origin.".into();
         }
     }
 
