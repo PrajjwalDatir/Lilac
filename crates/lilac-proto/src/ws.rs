@@ -7,7 +7,7 @@ use crate::{
     ranks::{GameTermination, RrBreakdown, TimeControlKind},
 };
 
-/// Client -> Server WebSocket messages consumed by `server-backend` (Task 1 & 2).
+/// Client -> Server WebSocket messages consumed by `server-backend`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMsg {
@@ -81,7 +81,7 @@ pub enum ServerMsg {
         rr_breakdown: Option<RrBreakdown>,
         earned_tags: Vec<PlaystyleTag>,
     },
-    /// Full state hydration payload for mid-game disconnect/reconnect recovery (Task 1).
+    /// Full state hydration payload for mid-game disconnect/reconnect recovery.
     GameSnapshot {
         game_id: Uuid,
         time_control: TimeControlKind,

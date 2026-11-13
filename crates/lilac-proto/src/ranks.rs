@@ -157,7 +157,7 @@ impl TimeControlKind {
     }
 }
 
-/// Itemized Valorant-style RR breakdown computed after a ranked match (Task 3).
+/// Itemized Valorant-style RR breakdown computed after a ranked match.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RrBreakdown {
     pub base_delta: i32,

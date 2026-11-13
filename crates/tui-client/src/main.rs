@@ -1,8 +1,6 @@
 //! True-color terminal chess client (`ratatui` + `crossterm`).
 //!
-//! Provides an interactive two-player local pass-and-play game today, while
-//! Task 5 wires in live WebSocket matchmaking, clocks, animations, and
-//! Valorant-style Cohort/Nemesis overlays.
+//! Provides an interactive two-player local pass-and-play game.
 
 mod assets;
 mod game;

@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::ranks::{RankBadge, RankDivision, RankTier, RrBreakdown, TimeControlKind};
 
-/// Behavioral playstyle tag derived by Task 3 telemetry workers.
+/// Behavioral playstyle tag derived by telemetry workers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PlaystyleTag {

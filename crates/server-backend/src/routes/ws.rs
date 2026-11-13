@@ -122,7 +122,7 @@ async fn handle_socket(
                             break;
                         }
                     }
-                    // Placeholder hook for Task 1 (State Matrix) & Task 2 (Nemesis Matchmaker).
+                    // Placeholder hook for State Matrix & Nemesis Matchmaker.
                     _ => {
                         let msg = if session_user.is_none() {
                             ServerMsg::Error {
@@ -132,8 +132,7 @@ async fn handle_socket(
                         } else {
                             ServerMsg::Error {
                                 code: "not_implemented".into(),
-                                message: "State Matrix / Matchmaker handler wired in Task 1 & 2"
-                                    .into(),
+                                message: "State Matrix / Matchmaker handler not yet wired".into(),
                             }
                         };
                         if out_tx.try_send(msg).is_err() {

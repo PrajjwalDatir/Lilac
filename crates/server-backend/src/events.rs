@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use lilac_proto::DomainEvent;
 use tokio::sync::{broadcast, mpsc};
 
-/// Decoupled internal event bus connecting Tasks 1, 2, 3, and 4.
+/// Decoupled internal event bus connecting system components.
 ///
 /// Provides both:
 /// - `subscribe()`: broadcast stream for non-critical live listeners.

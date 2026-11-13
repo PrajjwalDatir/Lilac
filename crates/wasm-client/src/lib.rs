@@ -1,6 +1,6 @@
 //! WebAssembly client bindings wrapping `client-core` and `chess-core`.
 //!
-//! Compiles cleanly for `wasm32-unknown-unknown` so Task 5 can drive any web UI
+//! Compiles cleanly for `wasm32-unknown-unknown` to drive web UIs
 //! from the exact same WebSocket protocol and rules engine as `tui-client`.
 
 use client_core::{

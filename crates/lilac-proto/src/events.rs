@@ -8,8 +8,7 @@ use crate::{
     ranks::{RankTier, TimeControlKind},
 };
 
-/// Internal domain events published on the backend `EventBus` to decouple
-/// Task 1 (State Matrix), Task 2 (Matchmaker), Task 3 (Telemetry/RR), and Task 4 (Tournaments).
+/// Internal domain events published on the backend `EventBus`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DomainEvent {
     MoveTelemetry {
